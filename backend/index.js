@@ -10,6 +10,7 @@ const axios = require('axios');
 const FormData = require('form-data');
 const fs = require('fs');
 const path = require('path');
+const { exec } = require('child_process');
 
 // Set up multer for file uploads
 const storage = multer.diskStorage({
@@ -39,84 +40,70 @@ const upload = multer({
 
 // Function to transcribe audio using Hugging Face API
 async function transcribeAudio(filePath) {
-  try {
-    const formData = new FormData();
-    formData.append('file', fs.createReadStream(filePath));
-    formData.append('model', 'openai/whisper-large-v3');
-    
-    const response = await axios.post(
-      'https://api-inference.huggingface.co/models/openai/whisper-large-v3',
-      formData,
-      {
-        headers: {
-          'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
-          ...formData.getHeaders()
-        }
-      }
-    );
-    
-    return response.data.text;
-  } catch (error) {
-    console.error('Error transcribing audio:', error);
-    throw new Error('Failed to transcribe audio');
-  }
+  return new Promise((resolve, reject) => {
+      exec(`whisper "${filePath}" --model small`, (error, stdout) => {
+          if (error) return reject("Error in Whisper transcription");
+          resolve(stdout.trim());
+      });
+  });
 }
 
+
 // Add this to your existing Express app
-module.exports = function(app) {
-  // API endpoint for audio analysis
-  app.post('/api/analyze-audio', upload.single('audioFile'), async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ error: 'No audio file uploaded' });
-      }
+// module.exports = function(app) {
+//   // API endpoint for audio analysis
+//   app.post('/api/analyze-audio', upload.single('audioFile'), async (req, res) => {
+//     try {
+//       if (!req.file) {
+//         return res.status(400).json({ error: 'No audio file uploaded' });
+//       }
       
-      // Get metadata from request
-      const { source, title } = req.body;
+//       // Get metadata from request
+//       const { source, title } = req.body;
       
-      if (!source || !title) {
-        return res.status(400).json({ error: 'Source and title are required' });
-      }
+//       if (!source || !title) {
+//         return res.status(400).json({ error: 'Source and title are required' });
+//       }
       
-      // Transcribe the audio file
-      const filePath = req.file.path;
-      const transcription = await transcribeAudio(filePath);
+//       // Transcribe the audio file
+//       const filePath = req.file.path;
+//       const transcription = await transcribeAudio(filePath);
       
-      if (!transcription || transcription.trim() === '') {
-        return res.status(400).json({ error: 'Could not transcribe audio or transcription is empty' });
-      }
+//       if (!transcription || transcription.trim() === '') {
+//         return res.status(400).json({ error: 'Could not transcribe audio or transcription is empty' });
+//       }
       
-      // Analyze the transcribed content using Gemini
-      const analysisResults = await analyzeWithGemini(title, transcription, source);
+//       // Analyze the transcribed content using Gemini
+//       const analysisResults = await analyzeWithGemini(title, transcription, source);
       
-      // Save to database (using your existing Article model)
-      const article = new Article({
-        title,
-        content: transcription,
-        source,
-        credibilityScore: analysisResults.credibilityScore,
-        analysisResults,
-        contentType: 'audio',
-        originalFileName: req.file.originalname
-      });
+//       // Save to database (using your existing Article model)
+//       const article = new Article({
+//         title,
+//         content: transcription,
+//         source,
+//         credibilityScore: analysisResults.credibilityScore,
+//         analysisResults,
+//         contentType: 'audio',
+//         originalFileName: req.file.originalname
+//       });
       
-      await article.save();
+//       await article.save();
       
-      // Remove the temporary audio file
-      fs.unlinkSync(filePath);
+//       // Remove the temporary audio file
+//       fs.unlinkSync(filePath);
       
-      res.json({
-        success: true,
-        article,
-        analysis: analysisResults,
-        transcription
-      });
-    } catch (error) {
-      console.error('Audio analysis error:', error);
-      res.status(500).json({ error: 'Server error during audio analysis' });
-    }
-  });
-};
+//       res.json({
+//         success: true,
+//         article,
+//         analysis: analysisResults,
+//         transcription
+//       });
+//     } catch (error) {
+//       console.error('Audio analysis error:', error);
+//       res.status(500).json({ error: 'Server error during audio analysis' });
+//     }
+//   });
+// };
 
 
 
@@ -266,6 +253,53 @@ app.get('/api/history', async (req, res) => {
     res.status(500).json({ error: 'Server error fetching history' });
   }
 });
+
+app.post('/api/analyze-audio', upload.single('audioFile'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No audio file uploaded' });
+    }
+    
+    const { source, title } = req.body;
+    if (!source || !title) {
+      return res.status(400).json({ error: 'Source and title are required' });
+    }
+    
+    const filePath = req.file.path;
+    
+    // Transcribe with Whisper (local)
+    const transcription = await transcribeAudio(filePath);
+    
+    if (!transcription || transcription.trim() === '') {
+      return res.status(400).json({ error: 'Could not transcribe audio' });
+    }
+    
+    // Analyze with Gemini
+    const analysisResults = await analyzeWithGemini(title, transcription, source);
+    
+    // Save to MongoDB
+    const article = new Article({
+      title,
+      content: transcription,
+      source,
+      credibilityScore: analysisResults.credibilityScore,
+      analysisResults,
+      contentType: 'audio',
+      originalFileName: req.file.originalname
+    });
+    
+    await article.save();
+    
+    // Delete temporary file
+    fs.unlinkSync(filePath);
+    
+    res.json({ success: true, article, analysis: analysisResults, transcription });
+  } catch (error) {
+    console.error("Audio analysis error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
