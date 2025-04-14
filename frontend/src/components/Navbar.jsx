@@ -36,6 +36,12 @@ const Navbar = () => {
               Audio Analysis
             </Link>
             <Link 
+              to="/image" 
+              className={`px-3 py-2 rounded-md text-sm font-medium ${isActive('/image')}`}
+            >
+              Image Analysis
+            </Link>
+            <Link 
               to="/history" 
               className={`px-3 py-2 rounded-md text-sm font-medium ${isActive('/history')}`}
             >
