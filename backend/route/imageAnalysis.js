@@ -4,6 +4,7 @@ import { AnalyzeImage } from "../service/AnalyzeImageGroq.js";
 import { Article } from "../model/article.model.js";
 import { analyzeWithGroq } from "../service/groqAnalyzer.js";
 import { analyzeWithGemini } from "../service/geminiAnalyzer.js";
+import fs from "fs";
 
 const router = express.Router();
 
@@ -41,11 +42,10 @@ router.post("/", upload.single("imageFile"), async (req, res) => {
     // Save to MongoDB
     const article = new Article({
       title,
-      content: transcription,
       source,
       credibilityScore: analysisResultsWithGemini.credibilityScore,
       analysisResultsWithGemini,
-      contentType: "audio",
+      contentType: "image",
       originalFileName: req.file.originalname,
     });
 
@@ -56,7 +56,7 @@ router.post("/", upload.single("imageFile"), async (req, res) => {
 
     res.json({ success: true, article, analysis: analysisResultsWithGemini });
   } catch (error) {
-    console.error("Audio analysis error:", error);
+    console.error("Image analysis error:", error);
     res.status(500).json({ error: "Server error" });
   }
 });

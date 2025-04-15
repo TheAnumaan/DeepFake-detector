@@ -106,7 +106,7 @@ const ImageAnalysis = () => {
             value={source}
             onChange={(e) => setSource(e.target.value)}
             className="w-full px-3 py-2 border rounded-lg"
-            placeholder="Podcast name, radio station, speaker, etc."
+            placeholder="Source (photographer, website, etc.)"
             required
           />
         </div>
