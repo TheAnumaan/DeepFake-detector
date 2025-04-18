@@ -1,91 +1,61 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import os
+from transformers import AutoFeatureExtractor, AutoModelForImageClassification
+from PIL import Image
+import requests
 import torch
-import torchaudio
-from transformers import AutoModelForAudioClassification, Wav2Vec2FeatureExtractor
-from werkzeug.utils import secure_filename
+import os
 
-app = Flask(__name__)
-CORS(app)
+app = Flask(__name__,static_folder="uploads")
+CORS(app, resources={r"/*": {"origins": "*"}})  # Allow all origins for now, restrict in production
 
-LABELS = ['angry', 'calm', 'happy', 'neutral', 'sad']
+# Load model and processor with error handling
+model_name = "prithivMLmods/Deep-Fake-Detector-v2-Model"
+try:
+    extractor = AutoFeatureExtractor.from_pretrained(model_name)
+    model = AutoModelForImageClassification.from_pretrained(model_name)
+    labels = model.config.id2label
+except Exception as e:
+    print(f"[ERROR] Failed to load model: {e}")
+    extractor, model, labels = None, None, None
 
-# Load models once at startup
-feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained("superb/wav2vec2-base-superb-er")
-model = AutoModelForAudioClassification.from_pretrained("superb/wav2vec2-base-superb-er")
-
-def analyze_emotion(audio_path):
+@app.route("/analyze-image", methods=["POST"])
+def analyze_image():
     try:
-        # Check if file exists
-        if not os.path.exists(audio_path):
-            raise FileNotFoundError(f"Audio file not found at path: {audio_path}")
-            
-        # Load and process audio
-        waveform, sr = torchaudio.load(audio_path)
-        waveform = waveform.mean(dim=0)  # Convert to mono
-        
-        # Extract features
-        inputs = feature_extractor(
-            waveform.numpy(), 
-            sampling_rate=sr, 
-            return_tensors="pt", 
-            padding=True
-        )
-        
-        # Get predictions
+        data = request.get_json()
+        image_url = data.get("image_url")
+        if not image_url:
+            return jsonify({"error": "Missing image_url"}), 400
+        if not model or not extractor:
+            return jsonify({"error": "Model not loaded"}), 500
+
+        # Check if the image_url is a local file path
+        if not image_url.startswith("http://") and not image_url.startswith("https://"):
+            # Construct the full URL for local file paths
+            image_url = f"http://localhost:5000/{image_url.replace('\\', '/')}"
+
+        # Load and prepare image
+        response = requests.get(image_url, stream=True)
+        response.raise_for_status()
+        image = Image.open(response.raw).convert("RGB")
+
+        # Predict
+        inputs = extractor(images=image, return_tensors="pt")
         with torch.no_grad():
             logits = model(**inputs).logits
-        
-        # Calculate probabilities
-        probs = torch.nn.functional.softmax(logits, dim=-1)
-        top_idx = torch.argmax(probs, dim=-1).item()
-        confidence = round(float(probs[0][top_idx].item()), 3)
-        
-        return {
-            "emotion": LABELS[top_idx],
-            "confidence": confidence,
-            "status": "success"
-        }
-        
-    except Exception as e:
-        return {
-            "status": "error",
-            "error": str(e)
-        }
+            probs = torch.nn.functional.softmax(logits, dim=-1)
+            top_idx = torch.argmax(probs).item()
 
-@app.route('/analyze-audio-emotions', methods=['POST'])
-def analyze_audio_file():
-    try:
-        # Get file path from request body
-        data = request.get_json()
-        
-        if not data or 'audio' not in data:
-            return jsonify({
-                "status": "error",
-                "error": "No audio file path provided"
-            }), 400
-            
-        file = request.files['audio']
-        file_path = os.path.join("temp", file.filename)
-        os.makedirs("temp", exist_ok=True)
-        file.save(file_path)
-        
-        # Analyze the audio file
-        result = analyze_emotion(file_path)
-        
-        if result["status"] == "error":
-            return jsonify(result), 500
-        
-        os.remove(file_path)
-            
-        return jsonify(result)
-        
-    except Exception as e:
         return jsonify({
-            "status": "error",
-            "error": str(e)
-        }), 500
+            "status": "success",
+            "prediction": labels[top_idx],
+            "confidence": float(probs[0][top_idx])
+        })
 
-if __name__ == '__main__':
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": f"Image download error: {str(e)}"}), 400
+    except Exception as e:
+        return jsonify({"error": f"Processing error: {str(e)}"}), 500
+
+if __name__ == "__main__":
     app.run(debug=True, port=5000)

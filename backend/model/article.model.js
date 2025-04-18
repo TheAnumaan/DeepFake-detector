@@ -2,6 +2,10 @@ import mongoose from 'mongoose';
 
 const articleSchema = new mongoose.Schema({
     url: String,
+    user:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"users"
+    },
     title: String,
     content: String,
     source: String,

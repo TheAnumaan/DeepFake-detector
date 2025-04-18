@@ -5,15 +5,17 @@ import fs from "fs";
 import { transcribeAudio } from "../service/whisperTranscription.js";
 import { analyzeWithGemini } from "../service/geminiAnalyzer.js";
 import { analyzeWithGroq } from "../service/groqAnalyzer.js";
-import axios from "axios";
+import verifyUser from "../middleware/verifyUser.js";
 
 const router = express.Router();
 
-router.post("/", upload.single("audioFile"), async (req, res) => {
+router.post("/",verifyUser,upload.single("audioFile"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "No audio file uploaded" });
     }
+
+    const user = req.user;
 
     const { source, title } = req.body;
     if (!source || !title) {
@@ -22,23 +24,6 @@ router.post("/", upload.single("audioFile"), async (req, res) => {
 
     const filePath = req.file.path;
     console.log(filePath);
-
-    let EmotionResponse = {};
-    const emotionResponse = await axios.post(
-      "http://localhost:5000/analyze-audio-emotions",
-      {
-        audio: filePath,
-      }
-    );
-
-    if (emotionResponse.data.status === "success") {
-      EmotionResponse = {
-        emotion: emotionResponse.data.emotion,
-        confidence: emotionResponse.data.confidence,
-      };
-    } else {
-      console.error("Emotion analysis failed:");
-    }
 
     const transcription = await transcribeAudio(filePath);
 
@@ -61,6 +46,7 @@ router.post("/", upload.single("audioFile"), async (req, res) => {
 
     // Save to MongoDB
     const article = new Article({
+      user:user._id,
       title,
       content: transcription,
       source,

@@ -14,13 +14,7 @@ const userSchema = new mongoose.Schema({
     password:{
         type:String,
         require:true
-    },
-    history:[
-        {
-            type:mongoose.Schema.Types.ObjectId,
-            ref:"articles"
-        }
-    ]
+    }
 },{timestamps:true});
 
 export const User = mongoose.model("User",userSchema);
