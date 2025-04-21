@@ -24,6 +24,19 @@ router.post("/",verifyUser,upload.single("imageFile"), async (req, res) => {
     }
 
     const filePath = req.file.path;
+
+    const articalExist = await Article.findOne({
+      contentType: "image",
+      user: user._id,
+      title,
+      source,
+    });
+
+    if(articalExist) {
+      fs.unlinkSync(filePath);
+      res.json({ success: true, analysis: articalExist.analysisResults });
+    }
+
     const imageData = await AnalyzeImage(filePath); //Analyze image and get in text form using Groq.
     if (!imageData || imageData.trim() === "") {
       return res.status(400).json({ error: "Could not transcribe image" });
@@ -59,7 +72,7 @@ router.post("/",verifyUser,upload.single("imageFile"), async (req, res) => {
       title,
       source,
       credibilityScore: analysisResultsWithGemini.credibilityScore,
-      analysisResultsWithGemini,
+      analysisResults:analysisResultsWithGemini,
       contentType: "image",
       originalFileName: req.file.originalname,
     });

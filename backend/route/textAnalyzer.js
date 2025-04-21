@@ -14,6 +14,17 @@ router.post("/",verifyUser,async (req,res) => {
         if (!title || !content) {
           return res.status(400).json({ error: 'Title and content are required' });
         }
+
+        const articalExist = await Article.findOne({
+          contentType: "text",
+          user: user._id,
+          title,
+          source,
+        });
+    
+        if(articalExist) {
+          res.json({ success: true, analysis: articalExist.analysisResults });
+        }
         
         const analysisResultsByGroq = await analyzeWithGroq(title, content, source);
         const analysisResultsByGemini = await analyzeWithGemini(title, content, source,analysisResultsByGroq);
@@ -26,8 +37,9 @@ router.post("/",verifyUser,async (req,res) => {
           title,
           content,
           source,
+          contentType:"text",
           credibilityScore: analysisResultsByGemini.credibilityScore,
-          analysisResultsByGemini
+          analysisResults:analysisResultsByGemini
         });
         
         await article.save();

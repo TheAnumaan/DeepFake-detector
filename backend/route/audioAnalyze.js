@@ -23,7 +23,17 @@ router.post("/",verifyUser,upload.single("audioFile"), async (req, res) => {
     }
 
     const filePath = req.file.path;
-    console.log(filePath);
+    const articalExist = await Article.findOne({
+      contentType: "audio",
+      user: user._id,
+      title,
+      source,
+    });
+
+    if(articalExist) {
+      fs.unlinkSync(filePath);
+      res.json({ success: true, analysis: articalExist.analysisResults,transcription:articalExist.content });
+    }
 
     const transcription = await transcribeAudio(filePath);
 
@@ -51,7 +61,7 @@ router.post("/",verifyUser,upload.single("audioFile"), async (req, res) => {
       content: transcription,
       source,
       credibilityScore: analysisResultsWithGemini.credibilityScore,
-      analysisResultsWithGemini,
+      analysisResults:analysisResultsWithGemini,
       contentType: "audio",
       originalFileName: req.file.originalname,
     });

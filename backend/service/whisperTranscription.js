@@ -15,8 +15,7 @@ export async function transcribeAudio(filePath) {
     const response = await groq.audio.transcriptions.create({
       file: audioStream,
       model: 'whisper-large-v3',
-      response_format: 'json',
-      language: "en"
+      response_format: 'json'
     });
 
     // Output the transcription result

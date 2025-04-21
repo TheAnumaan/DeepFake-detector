@@ -8,9 +8,11 @@ const articleSchema = new mongoose.Schema({
     },
     title: String,
     content: String,
+    contentType:String,
     source: String,
     credibilityScore: Number,
     analysisResults: Object,
+    originalFileName:String,
     createdAt: { type: Date, default: Date.now }
 })
 

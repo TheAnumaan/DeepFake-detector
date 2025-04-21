@@ -8,7 +8,7 @@ router.get("/",verifyUser,async (req,res) => {
     try {
         const user = req.user;
 
-        const articles = await Article.findOne({user:user._id}).sort({ createdAt: -1 }).limit(20);
+        const articles = await Article.find({user:user._id}).sort({ createdAt: -1 }).limit(20);
         res.json(articles);
       } catch (error) {
         res.status(500).json({ error: 'Server error fetching history' });
