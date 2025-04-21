@@ -13,7 +13,6 @@ const articleSchema = new mongoose.Schema({
     credibilityScore: Number,
     analysisResults: Object,
     originalFileName:String,
-    createdAt: { type: Date, default: Date.now }
-})
+},{timestamps:true});
 
 export const Article= mongoose.model('Article', articleSchema);
