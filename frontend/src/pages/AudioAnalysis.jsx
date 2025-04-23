@@ -10,6 +10,7 @@ const AudioAnalysis = () => {
   const [error, setError] = useState('');
   const [analysis, setAnalysis] = useState(null);
   const [transcription, setTranscription] = useState('');
+  const [isRealOrFake,setIsRealOrFake] = useState("");
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -60,6 +61,8 @@ const AudioAnalysis = () => {
       
       setAnalysis(response.data.analysis);
       setTranscription(response.data.transcription);
+      if(response.data.analysis.credibilityScore>=55) setIsRealOrFake(`Audio from ${source} is Real`);
+      else setIsRealOrFake(`Audio from ${source} is Fake`);
     } catch (err) {
       setError(err.response?.data?.error || 'An error occurred during analysis');
     } finally {
@@ -155,7 +158,8 @@ const AudioAnalysis = () => {
                 />
               </div>
               <span className={`font-bold text-xl ${getScoreColor(analysis.credibilityScore)}`}>
-                {analysis.credibilityScore}/100
+                {analysis.credibilityScore}/100,
+                ({isRealOrFake})
               </span>
             </div>
           </div>

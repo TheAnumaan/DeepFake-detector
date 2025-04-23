@@ -8,10 +8,11 @@ const articleSchema = new mongoose.Schema({
     },
     title: String,
     content: String,
+    contentType:String,
     source: String,
     credibilityScore: Number,
     analysisResults: Object,
-    createdAt: { type: Date, default: Date.now }
-})
+    originalFileName:String,
+},{timestamps:true});
 
 export const Article= mongoose.model('Article', articleSchema);

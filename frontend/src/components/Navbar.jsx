@@ -42,6 +42,12 @@ const Navbar = () => {
               Image Analysis
             </Link>
             <Link 
+              to="/video" 
+              className={`px-3 py-2 rounded-md text-sm font-medium ${isActive('/video')}`}
+            >
+              Video Analysis
+            </Link>
+            <Link 
               to="/history" 
               className={`px-3 py-2 rounded-md text-sm font-medium ${isActive('/history')}`}
             >

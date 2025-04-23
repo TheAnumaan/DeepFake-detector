@@ -9,6 +9,7 @@ const Home = () => {
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState(null);
   const [error, setError] = useState('');
+  const [isRealOrFake,setIsRealOrFake] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,6 +30,8 @@ const Home = () => {
       });
 
       setAnalysis(response.data.analysis);
+      if(response.data.analysis.credibilityScore>=55) setIsRealOrFake(`News from ${source} is Real`);
+      else setIsRealOrFake(`News from ${source} is Fake`);
     } catch (err) {
       setError(err.message || 'An error occurred during analysis');
     } finally {
@@ -124,7 +127,8 @@ const Home = () => {
                 />
               </div>
               <span className={`font-bold text-xl ${getScoreColor(analysis.credibilityScore)}`}>
-                {analysis.credibilityScore}/100
+                {analysis.credibilityScore}/100, 
+                ({isRealOrFake})
               </span>
             </div>
           </div>

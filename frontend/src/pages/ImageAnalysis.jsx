@@ -8,6 +8,7 @@ const ImageAnalysis = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [analysis, setAnalysis] = useState(null);
+  const [isRealOrFake,setIsRealOrFake] = useState("");
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -56,6 +57,8 @@ const ImageAnalysis = () => {
       });
       
       setAnalysis(response.data.analysis);
+      if(response.data.analysis.credibilityScore>=55) setIsRealOrFake(`Image from ${source} is Real`);
+      else setIsRealOrFake(`Image from ${source} is Fake`);
     } catch (error) {
       setError(err.response?.data?.error || 'An error occurred during analysis');
     } finally {
@@ -142,7 +145,8 @@ const ImageAnalysis = () => {
                 />
               </div>
               <span className={`font-bold text-xl ${getScoreColor(analysis.credibilityScore)}`}>
-                {analysis.credibilityScore}/100
+                {analysis.credibilityScore}/100,
+                ({isRealOrFake})
               </span>
             </div>
           </div>

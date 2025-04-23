@@ -5,6 +5,7 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import AudioAnalysis from './pages/AudioAnalysis';
 import ImageAnalysis from './pages/ImageAnalysis';
+import VideoAnalysis from './pages/VideoAnalysis';
 import History from './pages/History';
 import About from './pages/About';
 import './App.css';
@@ -19,6 +20,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/audio" element={<AudioAnalysis />} />
             <Route path="/image" element={<ImageAnalysis />} />
+            <Route path="/video" element={<VideoAnalysis />} />
             <Route path="/history" element={<History />} />
             <Route path="/about" element={<About />} />
           </Routes>

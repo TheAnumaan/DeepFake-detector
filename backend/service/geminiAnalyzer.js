@@ -4,7 +4,7 @@ const genAI = new GoogleGenerativeAI("AIzaSyC9HiiKleUtD2IhWUAmixl1FNRFsc_aWr8");
 
 export async function analyzeWithGemini(title, content, source, analysisResultsByGroq, EmotionResponse = {}) {
   const prompt = `
-    ${Object.keys(EmotionResponse).length === 0 ? "Analyze this news article for potential misinformation or fake news:" : "Analyze this image for potential misinformation or fake:"}
+    ${Object.keys(EmotionResponse).length === 0 ? "Analyze this news article for potential misinformation or fake news:" : "Analyze this image or video for potential misinformation or fake:"}
 
    📰 Article Details:
     Title: ${title}
@@ -18,18 +18,14 @@ export async function analyzeWithGemini(title, content, source, analysisResultsB
     "overallAssessment": "${analysisResultsByGroq.overallAssessment}" }
 
     ${Object.keys(EmotionResponse).length === 0 ? "" : `
-    🤖 Hugging Face Model Response:
+    🤖 Hugging Face DeekFake Model Response:
     Confidence: ${EmotionResponse.confidence*100}
     Prediction: ${EmotionResponse.prediction}
     Status: ${EmotionResponse.status}
     `}
 
     Please use this context to:
-    1. Confirm or challenge LLaMA’s analysis.
-    2. Add any additional insights or corrections.
-    3. Provide a deeper second-layer assessment, using your own reasoning.
-    4. Suggest improvements or highlight overlooked issues.
-    ${Object.keys(EmotionResponse).length === 0 ? "5. Take LLaMA result as 25% and Gemini result as 75%." : "5. Take LLaMA result as 10%, Hugging Face model response as 30%, and Gemini result as 60%."}
+    Analyze the provided news article for misinformation indicators and determine its authenticity percentage by assigning a credibility score. Create a comprehensive assessment that weighs different analyses (25% LLaMA, 75% Gemini) or (LLaMA & Gemini 80%, DeepFake model 20% if image/video analysis). Evaluate based on source credibility, clickbait elements, emotional language, factual consistency, perspective balance, source citations, expert opinions, and publication recency.
 
     Evaluate based on:
     1. Credibility of source
@@ -77,8 +73,8 @@ export async function analyzeWithGemini(title, content, source, analysisResultsB
     console.error("Error analyzing with Gemini:", error);
     return {
       credibilityScore: 50,
-      misleadingElements: ["Error in analysis"],
-      verificationSteps: ["Try again later"],
+      misleadingElements: "Error in analysis",
+      verificationSteps: "Try again later",
       overallAssessment: "Analysis failed due to technical error"
     };
   }
