@@ -18,12 +18,16 @@ dotenv.config({
 
 
 const app = express();
-const PORT = process.env.PORT || 5002;
+const PORT = 5002;
 
 // Middleware
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+  origin: 'http://localhost:5173', // Replace with your frontend's URL
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed HTTP methods
+  credentials: true // Allow cookies to be sent with requests
+}));
 app.use(cookieParser());
+app.use(express.json());
 
 // Connect to MongoDB
 mongoose.connect("mongodb+srv://anumaan:pagal@fakenews.0v4an.mongodb.net/?retryWrites=true&w=majority&appName=FakeNews")

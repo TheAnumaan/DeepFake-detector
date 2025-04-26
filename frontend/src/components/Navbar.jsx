@@ -24,35 +24,47 @@ const Navbar = () => {
           
           <div className="flex space-x-1">
             <Link 
-              to="/" 
-              className={`px-3 py-2 rounded-md text-sm font-medium ${isActive('/')}`}
+              to="/text-analysis" 
+              className={`px-3 py-2 rounded-md text-sm font-medium ${isActive('/text-analysis')}`}
             >
               Text Analysis
             </Link>
             <Link 
-              to="/audio" 
-              className={`px-3 py-2 rounded-md text-sm font-medium ${isActive('/audio')}`}
+              to="/audio-analysis" 
+              className={`px-3 py-2 rounded-md text-sm font-medium ${isActive('/audio-analysis')}`}
             >
               Audio Analysis
             </Link>
             <Link 
-              to="/image" 
-              className={`px-3 py-2 rounded-md text-sm font-medium ${isActive('/image')}`}
+              to="/image-analysis" 
+              className={`px-3 py-2 rounded-md text-sm font-medium ${isActive('/image-analysis')}`}
             >
               Image Analysis
             </Link>
             <Link 
-              to="/video" 
-              className={`px-3 py-2 rounded-md text-sm font-medium ${isActive('/video')}`}
+              to="/video-analysis" 
+              className={`px-3 py-2 rounded-md text-sm font-medium ${isActive('/video-analysis')}`}
             >
               Video Analysis
             </Link>
-            <Link 
+            <Link
+              to="/signIn"
+              className={`px-3 py-2 rounded-md text-sm font-medium ${isActive('/signIn') ? 'bg-blue-700 text-white' : 'bg-blue-500 text-white hover:bg-blue-500'}`}
+            >
+              Sign In
+            </Link>
+            <Link
+              to="/signUp"
+              className={`px-3 py-2 rounded-md text-sm font-medium bg-blue-700 text-white ${isActive('/signUp')}`}
+            >
+              Sign Up
+            </Link>
+            {/* <Link 
               to="/history" 
               className={`px-3 py-2 rounded-md text-sm font-medium ${isActive('/history')}`}
             >
               History
-            </Link>
+            </Link> */}
             <Link 
               to="/about" 
               className={`px-3 py-2 rounded-md text-sm font-medium ${isActive('/about')}`}

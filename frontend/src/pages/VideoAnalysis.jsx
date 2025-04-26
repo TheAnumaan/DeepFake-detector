@@ -43,7 +43,6 @@ const VideoAnalysis = () => {
     setLoading(true);
     setError('');
     setAnalysis(null);
-    setTranscription('');
     
     try {
       const formData = new FormData();

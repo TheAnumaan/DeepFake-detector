@@ -8,7 +8,6 @@ import { transcribeAudio } from "../service/whisperTranscription.js";
 import { analyzeWithGroq } from "../service/groqAnalyzer.js";
 import { analyzeWithGemini } from "../service/geminiAnalyzer.js";
 import { Article } from "../model/article.model.js";
-import verifyUser from "../middleware/verifyUser.js";
 
 const router = express.Router();
 const genAI = new GoogleGenerativeAI("AIzaSyC9HiiKleUtD2IhWUAmixl1FNRFsc_aWr8");
@@ -62,31 +61,17 @@ Return the result in the following JSON format:
   return JSON.parse(jsonMatch[1]);
 }
 
-router.post("/",verifyUser,upload.single("videoFile"), async (req, res) => {
+router.post("/",upload.single("videoFile"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "No image file uploaded" });
     }
-
-    const user = req.user;
     
     const { source, title } = req.body;
     if (!source || !title) {
       return res.status(400).json({ error: "Source and title are required" });
     }
     const videoPath = req.file.path;
-
-    const articalExist = await Article.findOne({
-      contentType: "video",
-      user: user._id,
-      title,
-      source,
-    });
-
-    if(articalExist) {
-      fs.unlinkSync(videoPath);
-      res.json({ success: true, analysis: articalExist.analysisResults });
-    }
 
     const transcription = await transcribeAudio(videoPath);
 
@@ -143,7 +128,6 @@ router.post("/",verifyUser,upload.single("videoFile"), async (req, res) => {
     console.log(analysisResultsWithGemini);
 
     const article = new Article({
-      user: user._id,
       title,
       source,
       credibilityScore: analysisResultsWithGemini.credibilityScore,
