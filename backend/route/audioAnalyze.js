@@ -5,17 +5,14 @@ import fs from "fs";
 import { transcribeAudio } from "../service/whisperTranscription.js";
 import { analyzeWithGemini } from "../service/geminiAnalyzer.js";
 import { analyzeWithGroq } from "../service/groqAnalyzer.js";
-import verifyUser from "../middleware/verifyUser.js";
 
 const router = express.Router();
 
-router.post("/",verifyUser,upload.single("audioFile"), async (req, res) => {
+router.post("/",upload.single("audioFile"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "No audio file uploaded" });
     }
-
-    const user = req.user;
 
     const { source, title } = req.body;
     if (!source || !title) {
@@ -23,17 +20,6 @@ router.post("/",verifyUser,upload.single("audioFile"), async (req, res) => {
     }
 
     const filePath = req.file.path;
-    const articalExist = await Article.findOne({
-      contentType: "audio",
-      user: user._id,
-      title,
-      source,
-    });
-
-    if(articalExist) {
-      fs.unlinkSync(filePath);
-      res.json({ success: true, analysis: articalExist.analysisResults,transcription:articalExist.content });
-    }
 
     const transcription = await transcribeAudio(filePath);
 
@@ -56,7 +42,6 @@ router.post("/",verifyUser,upload.single("audioFile"), async (req, res) => {
 
     // Save to MongoDB
     const article = new Article({
-      user:user._id,
       title,
       content: transcription,
       source,
